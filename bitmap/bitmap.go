@@ -4,7 +4,7 @@
 // Author：Ye Yin<hustcat@gmail.com>
 
 // NUMA CPU bitmap, used to affinity progress to some CPU.
-// CPU must be hypethreaded, and CPU no look like as follows:
+// CPU must be hypethreaded, and CPU number look like as follows:
 // [node0, node1, ... , node0, node1, ...]
 // For example:
 // node0: [0,1,2,3,4,5,12,13,14,15,16,17]
@@ -131,9 +131,6 @@ func (b *NumaBitmap) Get1BitOffsNuma(nodeNum uint) ([][]uint, error) {
 			//exlude hyperthread
 			if offset >= cpu {
 				tmp = offset - cpu
-				for tmp >= cpu {
-					tmp = offset - cpu
-				}
 			} else {
 				tmp = offset
 			}
