@@ -28,7 +28,7 @@ func TestGet1BitOffs(t *testing.T) {
 	bitmap.SetBit(15, 1)
 	bitmap.SetBit(10, 0)
 	bitmap.SetBit(10, 1)
-	actual := bitmap.Get1BitOffs()
+	actual, _ := bitmap.Get1BitOffs()
 	expected := []uint{1, 10, 15}
 	a := fmt.Sprintf("%v", expected)
 	b := fmt.Sprintf("%v", actual)
@@ -56,7 +56,7 @@ func TestGet1BitOffsNuma(t *testing.T) {
 	bitmap.SetBit(18, 1)
 	bitmap.SetBit(23, 1)
 
-	actual := bitmap.Get1BitOffsNuma(2)
+	actual, _ := bitmap.Get1BitOffsNuma(2)
 	expected := [][]uint{
 		[]uint{0, 5, 12, 17},
 		[]uint{6, 11, 18, 23},
