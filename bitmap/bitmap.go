@@ -118,6 +118,8 @@ func (b *NumaBitmap) Get1BitOffsNuma(nodeNum uint) [][]uint {
 			//exlude hyperthread
 			if offset > cpu {
 				tmp = offset - cpu
+			} else {
+				tmp = offset
 			}
 
 			curNode = tmp / step
