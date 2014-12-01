@@ -71,11 +71,10 @@ func (b *NumaBitmap) GetBit(offset uint) (byte, error) {
 }
 
 // Get the offset of bits equal 1 all
-func (b *NumaBitmap) Get1BitOffs() ([]uint, error) {
+func (b *NumaBitmap) Get1BitOffs() []uint {
 	var (
 		offset uint
 		offs   []uint
-		err    error
 	)
 
 	maxNo := b.userSize
@@ -86,7 +85,7 @@ func (b *NumaBitmap) Get1BitOffs() ([]uint, error) {
 
 			offset = uint(index*8 + pos)
 			if offset >= maxNo {
-				err = fmt.Errorf("offset: %d is out of range %d", offset, maxNo)
+				//err = fmt.Errorf("offset: %d is out of range %d", offset, maxNo)
 				goto OUT
 			}
 
@@ -96,7 +95,7 @@ func (b *NumaBitmap) Get1BitOffs() ([]uint, error) {
 		}
 	}
 OUT:
-	return offs, err
+	return offs
 }
 
 // Get the offsets of bits equal 1 per Node
@@ -124,7 +123,7 @@ func (b *NumaBitmap) Get1BitOffsNuma(nodeNum uint) ([][]uint, error) {
 		for pos := 0; pos < 8; pos++ {
 			offset = uint(index*8 + pos)
 			if offset >= maxNo {
-				err = fmt.Errorf("offset: %d is out of range %d", offset, maxNo)
+				//err = fmt.Errorf("offset: %d is out of range %d", offset, maxNo)
 				goto OUT
 			}
 
@@ -149,48 +148,83 @@ OUT:
 	return offs, err
 }
 
-/*
-//Set num bit to 1 on Node(node), return bits index
-func (b *NumaBitmap) Set1NumaBitNum(node uint, num uint) []uint {
+// Get the offset of bits equal 0 all
+func (b *NumaBitmap) Get0BitOffs() []uint {
+	var (
+		offset uint
+		offs   []uint
+	)
+
+	maxNo := b.userSize
+
+	offset = 0
+	for index, line := range b.bits {
+		for pos := 0; pos < 8; pos++ {
+
+			offset = uint(index*8 + pos)
+			if offset >= maxNo {
+				//err = fmt.Errorf("offset: %d is out of range %d", offset, maxNo)
+				goto OUT
+			}
+
+			if (line>>uint(pos))&0x01 == 0 {
+				offs = append(offs, offset)
+			}
+		}
+	}
+OUT:
+	return offs
+}
+
+// Get the offsets of bits equal 0 per Node
+func (b *NumaBitmap) Get0BitOffsNuma(nodeNum uint) ([][]uint, error) {
 	var (
 		tmp     uint
-		offs    []uint
 		offset  uint
 		curNode uint
+		err     error
 	)
 
 	maxNo := b.userSize
 	//only surpport hyperthread CPU
-	step := maxNo / (node * 2)
+	step := maxNo / (nodeNum * 2)
 
 	//cpu cores, don't include hyperthread
 	cpu := maxNo / 2
 
 	curNode = 0
 
+	offs := make([][]uint, nodeNum)
+
 	offset = 0
 	for index, line := range b.bits {
 		for pos := 0; pos < 8; pos++ {
 			offset = uint(index*8 + pos)
 			if offset >= maxNo {
-				break
+				//err = fmt.Errorf("offset: %d is out of range %d", offset, maxNo)
+				goto OUT
 			}
 
 			//exlude hyperthread
-			if offset > cpu {
+			if offset >= cpu {
 				tmp = offset - cpu
+			} else {
+				tmp = offset
 			}
 
 			curNode = tmp / step
-
-			if curNode == node && ((line>>uint(pos))&0x01) == 0 {
-				b.SetBit(offset, 1)
-				offs = append(offs, offset)
+			if curNode >= nodeNum {
+				err = fmt.Errorf("Node index out of range, curNode: %d, offset: %d, tmp: %d", curNode, offset, tmp)
+				goto OUT
+			}
+			if (line>>uint(pos))&0x01 == 0 {
+				offs[curNode] = append(offs[curNode], offset)
 			}
 		}
 	}
-	return offs
-}*/
+OUT:
+	return offs, err
+}
 
 func (b *NumaBitmap) String() string {
 
