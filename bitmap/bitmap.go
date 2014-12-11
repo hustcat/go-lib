@@ -3,13 +3,13 @@
 // license that can be found in the LICENSE file.
 // Author：Ye Yin<hustcat@gmail.com>
 
-// NUMA CPU bitmap, used to affinity progress to some CPU.
+// package bitmap provide NUMA cpu bitmap, used to affinity progress to some CPU.
 // CPU must be hypethreaded, and CPU number look like as follows:
 // [node0, node1, ... , node0, node1, ...]
-// For example:
+//
+// For example:.
 // node0: [0,1,2,3,4,5,12,13,14,15,16,17]
 // node1: [6,7,8,9,10,11,18,19,20,21,22,23]
-
 package bitmap
 
 import "fmt"
@@ -21,6 +21,7 @@ const maxSize = 1024
 //two nodes
 const defaultNodeNum = 2
 
+// NumaBitmap present NUMA cpu bits.
 type NumaBitmap struct {
 	bits []byte
 
@@ -31,10 +32,12 @@ type NumaBitmap struct {
 	nodeNum int
 }
 
+// NewNumaBitmap create bitmap with default args.
 func NewNumaBitmap() *NumaBitmap {
 	return NewNumaBitmapSize(defaultSize, defaultNodeNum)
 }
 
+// NewNumaBitmapSize create bitmap with size and numa node num
 func NewNumaBitmapSize(size uint, nodeNum int) *NumaBitmap {
 	if size == 0 || size > maxSize {
 		size = defaultSize
@@ -44,6 +47,7 @@ func NewNumaBitmapSize(size uint, nodeNum int) *NumaBitmap {
 	return &NumaBitmap{bits: make([]byte, size>>3), size: size, userSize: userSize, nodeNum: nodeNum}
 }
 
+// SetBit set offset bit with value
 func (b *NumaBitmap) SetBit(offset uint, value uint) error {
 	index, pos := offset/8, offset%8
 
@@ -70,7 +74,7 @@ func (b *NumaBitmap) GetBit(offset uint) (byte, error) {
 	return (b.bits[index] >> pos) & 0x01, nil
 }
 
-// Get the offset of bits equal 1 all
+// Get1BitOffs the offset of bits equal 1 all
 func (b *NumaBitmap) Get1BitOffs() []uint {
 	var (
 		offset uint
@@ -98,7 +102,7 @@ OUT:
 	return offs
 }
 
-// Get the offsets of bits equal 1 per Node
+// Get1BitOffsNuma the offsets of bits equal 1 each numa node
 func (b *NumaBitmap) Get1BitOffsNuma(nodeNum uint) ([][]uint, error) {
 	var (
 		tmp     uint
@@ -148,7 +152,7 @@ OUT:
 	return offs, err
 }
 
-// Get the offset of bits equal 0 all
+// Get0BitOffs the offset of bits equal 0 all
 func (b *NumaBitmap) Get0BitOffs() []uint {
 	var (
 		offset uint
@@ -176,7 +180,7 @@ OUT:
 	return offs
 }
 
-// Get the offsets of bits equal 0 per Node
+// Get0BitOffsNuma the offsets of bits equal 0 each numa node
 func (b *NumaBitmap) Get0BitOffsNuma(nodeNum uint) ([][]uint, error) {
 	var (
 		tmp     uint
