@@ -7,9 +7,14 @@
 // CPU must be hypethreaded, and CPU number look like as follows:
 // [node0, node1, ... , node0, node1, ...]
 //
-// For example:.
+// For example:
+// E5-2630
 // node0: [0,1,2,3,4,5,12,13,14,15,16,17]
 // node1: [6,7,8,9,10,11,18,19,20,21,22,23]
+//
+// E5-2670
+// node0: [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]
+// node1: [1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31]
 package bitmap
 
 import "fmt"
@@ -152,6 +157,40 @@ OUT:
 	return offs, err
 }
 
+// Get1BitOffsNumaVer the offsets of bits equal 1 each numa node (E5-2670)
+func (b *NumaBitmap) Get1BitOffsNumaVer(nodeNum uint) ([][]uint, error) {
+	var (
+		offset  uint
+		curNode uint
+		err     error
+	)
+
+	maxNo := b.userSize
+
+	curNode = 0
+
+	offs := make([][]uint, nodeNum)
+
+	offset = 0
+	for index, line := range b.bits {
+		for pos := 0; pos < 8; pos++ {
+			offset = uint(index*8 + pos)
+			if offset >= maxNo {
+				//err = fmt.Errorf("offset: %d is out of range %d", offset, maxNo)
+				goto OUT
+			}
+
+			curNode = offset % nodeNum
+
+			if (line>>uint(pos))&0x01 != 0 {
+				offs[curNode] = append(offs[curNode], offset)
+			}
+		}
+	}
+OUT:
+	return offs, err
+}
+
 // Get0BitOffs the offset of bits equal 0 all
 func (b *NumaBitmap) Get0BitOffs() []uint {
 	var (
@@ -221,6 +260,40 @@ func (b *NumaBitmap) Get0BitOffsNuma(nodeNum uint) ([][]uint, error) {
 				err = fmt.Errorf("Node index out of range, curNode: %d, offset: %d, tmp: %d", curNode, offset, tmp)
 				goto OUT
 			}
+			if (line>>uint(pos))&0x01 == 0 {
+				offs[curNode] = append(offs[curNode], offset)
+			}
+		}
+	}
+OUT:
+	return offs, err
+}
+
+// Get0BitOffsNumaVer the offsets of bits equal 0 each numa node(E5-2670)
+func (b *NumaBitmap) Get0BitOffsNumaVer(nodeNum uint) ([][]uint, error) {
+	var (
+		offset  uint
+		curNode uint
+		err     error
+	)
+
+	maxNo := b.userSize
+
+	curNode = 0
+
+	offs := make([][]uint, nodeNum)
+
+	offset = 0
+	for index, line := range b.bits {
+		for pos := 0; pos < 8; pos++ {
+			offset = uint(index*8 + pos)
+			if offset >= maxNo {
+				//err = fmt.Errorf("offset: %d is out of range %d", offset, maxNo)
+				goto OUT
+			}
+
+			curNode = offset % nodeNum
+
 			if (line>>uint(pos))&0x01 == 0 {
 				offs[curNode] = append(offs[curNode], offset)
 			}

@@ -68,6 +68,37 @@ func TestGet1BitOffsNuma(t *testing.T) {
 	}
 }
 
+func TestGet1BitOffsNumaVer(t *testing.T) {
+	bitmap := NewNumaBitmapSize(32, 2)
+
+	//node 0
+	bitmap.SetBit(0, 1)
+	bitmap.SetBit(14, 1)
+
+	//node 1
+	bitmap.SetBit(1, 1)
+	bitmap.SetBit(15, 1)
+
+	//node 0
+	bitmap.SetBit(16, 1)
+	bitmap.SetBit(30, 1)
+
+	//node 1
+	bitmap.SetBit(17, 1)
+	bitmap.SetBit(31, 1)
+
+	actual, _ := bitmap.Get1BitOffsNumaVer(2)
+	expected := [][]uint{
+		[]uint{0, 14, 16, 30},
+		[]uint{1, 15, 17, 31},
+	}
+	a := fmt.Sprintf("%v", expected)
+	b := fmt.Sprintf("%v", actual)
+	if a != b {
+		t.Errorf("expected:%v, actual:%v", a, b)
+	}
+}
+
 func TestGet1BitOffsNuma4(t *testing.T) {
 	bitmap := NewNumaBitmapSize(48, 4)
 
