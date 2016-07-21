@@ -1,8 +1,3 @@
-// Copyright 2014 bitmap authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-// Author：Ye Yin<hustcat@gmail.com>
-
 // package bitmap provide NUMA cpu bitmap, used to affinity progress to some CPU.
 // CPU must be hypethreaded, and CPU number look like as follows:
 // [node0, node1, ... , node0, node1, ...]
