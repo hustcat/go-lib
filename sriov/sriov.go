@@ -201,13 +201,14 @@ func configureIface(conf *NetConf) error {
 		return fmt.Errorf("failed to set %q UP: %v", ifName, err)
 	}
 
-	_, n, err := net.ParseCIDR(conf.IPAddr)
+	i, n, err := net.ParseCIDR(conf.IPAddr)
 	if err != nil {
 		return fmt.Errorf("failed to parse ip address :%s", conf.IPAddr)
 	}
 
-	addr := &netlink.Addr{IPNet: n, Label: ""}
-	if err = netlink.AddrAdd(link, addr); err != nil {
+	addr := &net.IPNet{IP: i, Mask: n.Mask}
+	nlAddr := &netlink.Addr{IPNet: addr, Label: ""}
+	if err = netlink.AddrAdd(link, nlAddr); err != nil {
 		return fmt.Errorf("failed to add IP addr to %q: %v", ifName, err)
 	}
 
