@@ -94,10 +94,12 @@ func releaseVF(conf *NetConf, ifName string, netns ns.NetNS) error {
 	if err != nil {
 		return fmt.Errorf("failed to get init netns: %v", err)
 	}
+	defer initns.Close()
 
 	if err = netns.Set(); err != nil {
 		return fmt.Errorf("failed to enter netns %q: %v", netns, err)
 	}
+	defer initns.Set()
 
 	// get VF device
 	vfDev, err := netlink.LinkByName(ifName)
