@@ -2,13 +2,13 @@ package sriov
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net"
-	"os"
-
 	"github.com/containernetworking/cni/pkg/ip"
 	"github.com/containernetworking/cni/pkg/ns"
 	"github.com/vishvananda/netlink"
+	"io/ioutil"
+	"net"
+	"os"
+	"runtime"
 )
 
 type NetConf struct {
@@ -21,6 +21,10 @@ type NetConf struct {
 	Gateway string `json:"gateway"`
 	IfName  string `json:"ifname"`
 	NetNs   string `json:"netns"`
+}
+
+func init() {
+	runtime.LockOSThread()
 }
 
 func setupVF(conf *NetConf, ifName string, netns ns.NetNS) error {
@@ -89,18 +93,7 @@ func setupVF(conf *NetConf, ifName string, netns ns.NetNS) error {
 	})
 }
 
-func releaseVF(conf *NetConf, ifName string, netns ns.NetNS) error {
-	initns, err := ns.GetCurrentNS()
-	if err != nil {
-		return fmt.Errorf("failed to get init netns: %v", err)
-	}
-	defer initns.Close()
-
-	if err = netns.Set(); err != nil {
-		return fmt.Errorf("failed to enter netns %q: %v", netns, err)
-	}
-	defer initns.Set()
-
+func releaseVF(conf *NetConf, ifName string, initns ns.NetNS) error {
 	// get VF device
 	vfDev, err := netlink.LinkByName(ifName)
 	if err != nil {
@@ -131,7 +124,6 @@ func releaseVF(conf *NetConf, ifName string, netns ns.NetNS) error {
 }
 
 func SetupVF(conf *NetConf) error {
-
 	netns, err := ns.GetNS(conf.NetNs)
 	if err != nil {
 		return fmt.Errorf("failed to open netns %q: %v", netns, err)
@@ -153,16 +145,21 @@ func SetupVF(conf *NetConf) error {
 }
 
 func ReleaseVF(conf *NetConf) error {
-
 	netns, err := ns.GetNS(conf.NetNs)
 	if err != nil {
 		return fmt.Errorf("failed to open netns %q: %v", netns, err)
 	}
 	defer netns.Close()
 
-	if err = releaseVF(conf, conf.IfName, netns); err != nil {
-		return err
+	initns, err := ns.GetCurrentNS()
+	if err != nil {
+		return fmt.Errorf("failed to open init ns: %v", err)
 	}
+	defer initns.Close()
+
+	err = netns.Do(func(_ ns.NetNS) error {
+		return releaseVF(conf, conf.IfName, initns)
+	})
 
 	return nil
 }
